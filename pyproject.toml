@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "click>=8.2.0",
+    "inputs>=0.5",
+    "onnxruntime>=1.22.0",
     "opencv-python>=4.11.0.86",
     "pyyaml>=6.0.2",
     "sshkeyboard>=2.3.1",
