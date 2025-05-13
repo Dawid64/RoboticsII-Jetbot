@@ -1,14 +1,9 @@
 """
 With this script, you can control jetbot movement with your keyboard (instead of gamepad).
 """
-import asyncio
-import cv2
-import click
-import time
-from pathlib import Path
 import yaml
 
-from PUTDriver import PUTDriver, gstreamer_pipeline
+from PUTDriver import PUTDriver
 
 try:
     from sshkeyboard import listen_keyboard
@@ -16,6 +11,7 @@ except ImportError:
     print('sshkeyboard module not found. Install it with:')
     print('pip install sshkeyboard')
     exit(1)
+
 
 class KeyboardControl:
     def __init__(self, config) -> None:
@@ -27,12 +23,12 @@ class KeyboardControl:
         self.driver = PUTDriver(config=config)
 
     def press(self, key, interval=0.1):
-        
+
         if key == 'w':
             self.press_durations['forward'] += interval
         elif key == 's':
             self.press_durations['forward'] -= interval
-            
+
         if key == 'a':
             self.press_durations['left'] += interval*2
         elif key == 'd':
@@ -50,15 +46,16 @@ class KeyboardControl:
 
         self.driver.update(forward, left)
 
+
 def main():
     with open("config.yml", "r") as stream:
         try:
             config = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-    
+
     keyboard_control = KeyboardControl(config=config)
-    
+
     input('Robot is ready to ride. Press enter to start, and then control with WSAD...')
 
     listen_keyboard(
@@ -68,6 +65,6 @@ def main():
         delay_other_chars=0.05,
     )
 
+
 if __name__ == '__main__':
     main()
-

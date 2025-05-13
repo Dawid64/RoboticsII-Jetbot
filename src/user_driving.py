@@ -1,10 +1,11 @@
-import cv2
-from inputs import get_gamepad
-import click
 import math
 import threading
 import time
 from pathlib import Path
+
+import cv2
+from inputs import get_gamepad
+import click
 import yaml
 
 from PUTDriver import PUTDriver, gstreamer_pipeline
@@ -23,12 +24,10 @@ class XboxController(object):
         self._monitor_thread.daemon = True
         self._monitor_thread.start()
 
-
-    def read(self): # return the buttons/triggers that you care about in this methode
+    def read(self):  # return the buttons/triggers that you care about in this methode
         forward = (self.LeftJoystickY-128)*(-1)/128
         left = (self.RightJoystickX-127)*(-1)/128
         return [forward, left]
-
 
     def _monitor_controller(self):
         while True:
@@ -87,7 +86,7 @@ def main(record):
     while True:
         ret, image = video_capture.read()
         if not ret:
-            print(f'No camera')
+            print('No camera')
             break
 
         forward, left = joy.read()

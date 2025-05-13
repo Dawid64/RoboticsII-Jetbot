@@ -1,4 +1,3 @@
-import cv2
 from jetbot import Robot
 
 
@@ -13,7 +12,7 @@ class PUTDriver:
         self.right_c = config['robot']['differential']['right']
 
     def update(self, forward, left):
-        
+
         left_speed = forward * self.left_c
         right_speed = forward * self.right_c
 

@@ -1,0 +1,4 @@
+[MAIN]
+init-hook='import sys; sys.path.append(".")'
+max-line-length=140
+disable=W0511,E0401,C0114,C0115,C0116

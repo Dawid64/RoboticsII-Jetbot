@@ -1,7 +1,6 @@
 import cv2
 import onnxruntime as rt
 
-from pathlib import Path
 import yaml
 import numpy as np
 
@@ -13,18 +12,18 @@ class AI:
         self.path = config['model']['path']
 
         self.sess = rt.InferenceSession(self.path, providers=['TensorrtExecutionProvider', 'CUDAExecutionProvider', 'CPUExecutionProvider'])
- 
+
         self.output_name = self.sess.get_outputs()[0].name
         self.input_name = self.sess.get_inputs()[0].name
 
     def preprocess(self, img: np.ndarray) -> np.ndarray:
-        ##TODO: preprocess your input image, remember that img is in BGR channels order
+        # TODO: preprocess your input image, remember that img is in BGR channels order
         raise NotImplementedError
 
         return img
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
-        ##TODO: prepare your outputs
+        # TODO: prepare your outputs
         raise NotImplementedError
 
         return detections
@@ -34,7 +33,7 @@ class AI:
 
         assert inputs.dtype == np.float32
         assert inputs.shape == (1, 3, 224, 224)
-        
+
         detections = self.sess.run([self.output_name], {self.input_name: inputs})[0]
         outputs = self.postprocess(detections)
 
@@ -63,7 +62,7 @@ def main():
     if not ret:
         print(f'No camera')
         return
-    
+
     _ = ai.predict(image)
 
     input('Robot is ready to ride. Press Enter to start...')
