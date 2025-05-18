@@ -18,10 +18,23 @@ class AI:
         self.input_name = self.sess.get_inputs()[0].name
 
     def preprocess(self, img: np.ndarray) -> np.ndarray:
-        ##TODO: preprocess your input image, remember that img is in BGR channels order
-        raise NotImplementedError
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        height, width = gray.shape
+        roi_height = height // 2
+        roi = gray[height - roi_height:height, :]
+        mean_val = np.mean(roi)
+        std_val = np.std(roi)
+        lower_threshold = max(0, mean_val - std_val)
+        upper_threshold = min(255, mean_val + std_val)
+        edges = cv2.Canny(roi, lower_threshold, upper_threshold)
+        result = np.zeros((height, width), dtype=np.uint8)
+        result[height - roi_height:height, :] = edges
+        kernel = np.ones((2, 2), np.uint8)
+        result = cv2.dilate(result, kernel, iterations=1)
+        result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR).astype(np.float32) / 255.0
+        result = np.expand_dims(result.transpose(2, 0, 1), axis=0)
 
-        return img
+        return result
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
         ##TODO: prepare your outputs
