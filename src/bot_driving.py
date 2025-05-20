@@ -1,5 +1,6 @@
 import cv2
 import onnxruntime as rt
+from typing import Literal
 
 from pathlib import Path
 import yaml
@@ -16,6 +17,9 @@ class AI:
  
         self.output_name = self.sess.get_outputs()[0].name
         self.input_name = self.sess.get_inputs()[0].name
+
+        self.history = []
+        self.robot_config = config["robot"]["postprocessing"]
 
     def preprocess(self, img: np.ndarray) -> np.ndarray:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -37,10 +41,32 @@ class AI:
         return result
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
-        ##TODO: prepare your outputs
-        raise NotImplementedError
+        detections[detections > 1.0] = detections[detections > 1.0] * 0 + 1.0
+        detections[detections < -1.0] = detections[detections < -1.0] * 0 - 1.0
+
+        if self.robot_config["smooth"]:
+            detections = self.postprocess_smoothing(detections, self.robot_config["hist_len"])
+
+        if self.robot_config["speed"] == "mid":
+            detections[0] = detections[0]**(1/2)
+        elif self.robot_config["speed"] == "max" and detections[0] > 0.0:
+            detections[0] = 1.0
 
         return detections
+    
+    def postprocess_smoothing(self, detections: np.ndarray, hist_len = 4) -> np.ndarray:
+        if len(self.history) > max(1000, hist_len - 1):
+            self.history = self.history[-(hist_len - 1):]
+
+        self.history.append(detections)
+        print(self.history)
+        mult = np.exp(np.arange(1, min(len(self.history), hist_len) + 1, 1, dtype=float))
+        mult /= np.sum(mult)
+        mult = mult.reshape(-1, 1)
+        print(mult)
+
+        return np.sum(np.array(self.history[-(min(4, len(self.history))):]) * mult, axis=0)
+
 
     def predict(self, img: np.ndarray) -> np.ndarray:
         inputs = self.preprocess(img)
@@ -53,8 +79,8 @@ class AI:
 
         assert outputs.dtype == np.float32
         assert outputs.shape == (2,)
-        assert outputs.max() < 1.0
-        assert outputs.min() > -1.0
+        assert outputs.max() <= 1.0
+        assert outputs.min() >= -1.0
 
         return outputs
 

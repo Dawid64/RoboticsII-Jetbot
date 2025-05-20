@@ -7,3 +7,8 @@ robot:
   differential:
     left: 0.0
     right: 0.0
+  
+  postprocessing:
+    speed: "norm"
+    smooth: False
+    hist_len: 4
