@@ -1,6 +1,5 @@
 import cv2
 import onnxruntime as rt
-from typing import Literal
 
 from pathlib import Path
 import yaml
@@ -22,6 +21,10 @@ class AI:
         self.robot_config = config["robot"]["postprocessing"]
 
     def preprocess(self, img: np.ndarray) -> np.ndarray:
+        img = img.astype(np.float32) / 255.0
+        return np.expand_dims(img.transpose(2, 0, 1), axis=0)
+        #cv2.imwrite("asia-img.png", img)
+        #raise Exception("abc")
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         height, width = gray.shape
         roi_height = height // 2
@@ -41,15 +44,18 @@ class AI:
         return result
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
+        detections = detections[0]
+        print(detections)
+        assert detections.shape == (2,)
         detections[detections > 1.0] = detections[detections > 1.0] * 0 + 1.0
         detections[detections < -1.0] = detections[detections < -1.0] * 0 - 1.0
-
+        print(detections)
         if self.robot_config["smooth"]:
             detections = self.postprocess_smoothing(detections, self.robot_config["hist_len"])
 
         if self.robot_config["speed"] == "mid":
-            detections[0] = detections[0]**(1/2)
-        elif self.robot_config["speed"] == "max" and detections[0] > 0.0:
+            detections[0] = np.sqrt(detections[0])
+        elif (self.robot_config["speed"] == "max") and (detections[0] > 0.0):
             detections[0] = 1.0
 
         return detections
@@ -79,6 +85,7 @@ class AI:
 
         assert outputs.dtype == np.float32
         assert outputs.shape == (2,)
+        print(outputs)
         assert outputs.max() <= 1.0
         assert outputs.min() >= -1.0
 

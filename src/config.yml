@@ -1,14 +1,14 @@
 model:
-  path: ''
+  path: '/home/jetbot/Student/Robotics-Dawid/model0_0_0.onnx'
 
 robot:
   max_speed: 0.22
-  max_steering: 0.5
+  max_steering: 1.0
   differential:
-    left: 0.0
-    right: 0.0
+    left: 1.0
+    right: 1.0
   
   postprocessing:
-    speed: "norm"
+    speed: "mid"
     smooth: False
     hist_len: 4
