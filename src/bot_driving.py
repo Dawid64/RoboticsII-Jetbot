@@ -45,11 +45,10 @@ class AI:
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
         detections = detections[0]
-        # print(detections)
         assert detections.shape == (2,)
         detections[detections > 1.0] = detections[detections > 1.0] * 0 + 1.0
         detections[detections < -1.0] = detections[detections < -1.0] * 0 - 1.0
-        # print(detections)
+
         if self.robot_config["smooth"]:
             detections = self.postprocess_smoothing(detections, self.robot_config["hist_len"])
 
@@ -70,11 +69,9 @@ class AI:
             self.history = self.history[-(hist_len - 1):]
 
         self.history.append(detections)
-        print(self.history)
         mult = np.exp(np.arange(1, min(len(self.history), hist_len) + 1, 1, dtype=float))
         mult /= np.sum(mult)
         mult = mult.reshape(-1, 1)
-        print(mult)
 
         return np.sum(np.array(self.history[-(min(4, len(self.history))):]) * mult, axis=0)
 
