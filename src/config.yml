@@ -11,4 +11,5 @@ robot:
   postprocessing:
     speed: "mid"
     smooth: False
+    centre: False
     hist_len: 4

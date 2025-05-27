@@ -45,18 +45,23 @@ class AI:
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
         detections = detections[0]
-        print(detections)
+        # print(detections)
         assert detections.shape == (2,)
         detections[detections > 1.0] = detections[detections > 1.0] * 0 + 1.0
         detections[detections < -1.0] = detections[detections < -1.0] * 0 - 1.0
-        print(detections)
+        # print(detections)
         if self.robot_config["smooth"]:
             detections = self.postprocess_smoothing(detections, self.robot_config["hist_len"])
 
         if self.robot_config["speed"] == "mid":
-            detections[0] = np.sqrt(detections[0])
+            if detections[0] > 0.01:
+                detections[0] = np.sqrt(detections[0])
         elif (self.robot_config["speed"] == "max") and (detections[0] > 0.0):
             detections[0] = 1.0
+
+        if self.robot_config["centre"]:
+            if detections[1] < 0.3 and detections[1] > -0.3:
+                detections[1] *= np.abs(detections[1])
 
         return detections
     
