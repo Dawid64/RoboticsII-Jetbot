@@ -20,14 +20,13 @@ class AI:
         self.history = []
         self.robot_config = config["robot"]["postprocessing"]
 
-    def preprocess(self, img: np.ndarray) -> np.ndarray:
-        img = img.astype(np.float32) / 255.0
-        return np.expand_dims(img.transpose(2, 0, 1), axis=0)
-        #cv2.imwrite("asia-img.png", img)
-        #raise Exception("abc")
+        self.counter = 0
+        self.mult = 0
+
+    def preprocess(self, img: np.ndarray, roi=2) -> np.ndarray:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         height, width = gray.shape
-        roi_height = height // 2
+        roi_height = height // roi
         roi = gray[height - roi_height:height, :]
         mean_val = np.mean(roi)
         std_val = np.std(roi)
@@ -40,10 +39,10 @@ class AI:
         result = cv2.dilate(result, kernel, iterations=1)
         result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR).astype(np.float32) / 255.0
         result = np.expand_dims(result.transpose(2, 0, 1), axis=0)
-
         return result
 
     def postprocess(self, detections: np.ndarray) -> np.ndarray:
+        print(detections)
         detections = detections[0]
         assert detections.shape == (2,)
         detections[detections > 1.0] = detections[detections > 1.0] * 0 + 1.0
@@ -53,14 +52,39 @@ class AI:
             detections = self.postprocess_smoothing(detections, self.robot_config["hist_len"])
 
         if self.robot_config["speed"] == "mid":
-            if detections[0] > 0.01:
+            #if detections[0] > 0.01 and detections[0] < 0.75:
+            #    detections[0] = min(np.sqrt(detections[0]), 0.75)
+            #elif detections[0] > 0.75:
+            #    detections[0] = 0.75
+            if detections[0] > 0.0:
                 detections[0] = np.sqrt(detections[0])
         elif (self.robot_config["speed"] == "max") and (detections[0] > 0.0):
             detections[0] = 1.0
-
+        if detections[1] < 0.1 and detections[1] > -0.1:
+            detections[0] *= 1.4
+            if detections[0] > 1:
+                detections[0] = 1
         if self.robot_config["centre"]:
-            if detections[1] < 0.3 and detections[1] > -0.3:
-                detections[1] *= np.abs(detections[1])
+            if detections[1] < 0.1 and detections[1] > -0.1:
+                detections[1] = 0
+                detections[0]
+                if detections[0] > 1: detections[0] = 1
+            else:
+                detections[0]
+
+        self.counter += 1
+        if self.counter > 0:
+            if self.mult == 0:
+                self.mult = 1
+            else:
+                self.mult = 0
+            
+            self.counter = 0
+
+        #detections *= self.mult
+        
+        print(type(detections))
+        print(detections)
 
         return detections
     
@@ -73,12 +97,11 @@ class AI:
         mult /= np.sum(mult)
         mult = mult.reshape(-1, 1)
 
-        return np.sum(np.array(self.history[-(min(4, len(self.history))):]) * mult, axis=0)
-
+        return np.sum(np.array(self.history[-(min(4, len(self.history))):]) * mult, axis=0, dtype=np.float32)
 
     def predict(self, img: np.ndarray) -> np.ndarray:
         inputs = self.preprocess(img)
-
+        
         assert inputs.dtype == np.float32
         assert inputs.shape == (1, 3, 224, 224)
         
@@ -117,6 +140,8 @@ def main():
     input('Robot is ready to ride. Press Enter to start...')
 
     forward, left = 0.0, 0.0
+    counter = 0
+    import time
     while True:
         print(f'Forward: {forward:.4f}\tLeft: {left:.4f}')
         driver.update(forward, left)
@@ -125,8 +150,12 @@ def main():
         if not ret:
             print(f'No camera')
             break
+        counter += 1
+        if (counter % 10) != 0:
+            continue
+        start = time.time()
         forward, left = ai.predict(image)
-
+        print(time.time() - start)
 
 if __name__ == '__main__':
     main()

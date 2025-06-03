@@ -1,9 +1,9 @@
 model:
-  path: '/home/jetbot/Student/Robotics-Dawid/model0_0_0.onnx'
+  path: '/home/jetbot/Student/Robotics-Mateusz/model_1_2.onnx'
 
 robot:
-  max_speed: 0.22
-  max_steering: 1.0
+  max_speed: 0.15
+  max_steering: 0.55
   differential:
     left: 1.0
     right: 1.0
